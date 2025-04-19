@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { wordsApi, authApi } from '../../../utils/api';
+import { wordsApi } from '../../../utils/api';
 import Notation from './Notation';
 
 interface Word {
@@ -9,12 +9,6 @@ interface Word {
   part_of_speech: string | null;
   motif: string | null;
   mnemonic: string | null;
-}
-
-interface User {
-  email: string;
-  name: string;
-  picture: string;
 }
 
 const WordDetail = () => {
@@ -27,23 +21,6 @@ const WordDetail = () => {
   const [editedWord, setEditedWord] = useState<Word | null>(null);
   const [invalidMotif, setInvalidMotif] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await authApi.check();
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-      }
-    };
-
-    checkAuth();
-  }, []);
 
   useEffect(() => {
     fetchWordDetails();
@@ -54,23 +31,6 @@ const WordDetail = () => {
       setEditedWord(word);
     }
   }, [word]);
-
-  const checkAdminStatus = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/auth/check', {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const userData: User = await response.json();
-        const AUTHORIZED_EMAIL = import.meta.env.VITE_AUTHORIZED_EMAIL;
-        setIsAdmin(userData.email === AUTHORIZED_EMAIL);
-      }
-    } catch (error) {
-      console.error('Error checking admin status:', error);
-      setIsAdmin(false);
-    }
-  };
 
   const validateMotif = (value: string) => {
     const validPattern = /^[A-G#*" ]*$/;
@@ -261,7 +221,7 @@ const WordDetail = () => {
             <div className="flex flex-col space-y-2">
               <input
                 type="text"
-                value={editedWord.motif || ''}
+                value={editedWord.motif || 'C'}
                 onChange={(e) => handleMotifChange(e.target.value)}
                 className={`border rounded-md px-3 py-2 w-full ${invalidMotif ? 'border-red-500' : ''}`}
                 placeholder="Enter musical notation (e.g., CDEF*G)"

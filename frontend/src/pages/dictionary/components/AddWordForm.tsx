@@ -2,23 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { wordsApi } from '../../../utils/api';
 
 interface AddWordFormProps {
-  onSubmit: (word: {
-    word: string;
-    part_of_speech: string;
-    motif: string;
-    mnemonic: string;
-  }) => Promise<void>;
+  onWordAdded: (word: any) => void;
   onCancel: () => void;
 }
 
-const AddWordForm = ({ onSubmit, onCancel }: AddWordFormProps) => {
+const AddWordForm: React.FC<AddWordFormProps> = ({ onWordAdded, onCancel }) => {
   const [newWord, setNewWord] = useState({
     word: '',
     part_of_speech: '',
     motif: '',
     mnemonic: ''
   });
-
   const [errors, setErrors] = useState({
     word: false,
     part_of_speech: false,
@@ -26,57 +20,12 @@ const AddWordForm = ({ onSubmit, onCancel }: AddWordFormProps) => {
     duplicate: false,
     motifPartOfSpeech: false
   });
-
   const [isChecking, setIsChecking] = useState(false);
-  const [invalidMotifChars, setInvalidMotifChars] = useState(false);
-  const [duplicateMotifWord, setDuplicateMotifWord] = useState<string | null>(null);
   const [isCheckingMotif, setIsCheckingMotif] = useState(false);
+  const [duplicateMotifWord, setDuplicateMotifWord] = useState<string | null>(null);
+  const [invalidMotifChars, setInvalidMotifChars] = useState(false);
   const [motifPartOfSpeechError, setMotifPartOfSpeechError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const checkWordExists = async () => {
-      const word = newWord.word.trim();
-      console.log('Checking word:', word);
-      
-      if (!word) {
-        console.log('Empty word, resetting states');
-        setErrors(prev => ({ ...prev, duplicate: false }));
-        setIsChecking(false);
-        return;
-      }
-
-      setIsChecking(true);
-      try {
-        console.log('Fetching words from database...');
-        const response = await wordsApi.getByWord(word);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Retrieved words:', data);
-          setErrors(prev => ({ ...prev, duplicate: data !== null }));
-        } else {
-          console.error('Error checking word existence:', response.statusText);
-          setErrors(prev => ({ ...prev, duplicate: false }));
-        }
-      } catch (error) {
-        console.error('Error checking word:', error);
-        setErrors(prev => ({ ...prev, duplicate: false }));
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    console.log('Word changed, setting up check timeout');
-    const timeoutId = setTimeout(() => {
-      checkWordExists();
-    }, 500);
-
-    return () => {
-      console.log('Cleaning up previous timeout');
-      clearTimeout(timeoutId);
-    };
-  }, [newWord.word]);
 
   const getMotifPartOfSpeechError = (motif: string, partOfSpeech: string): string | null => {
     if (!motif.trim()) return null;
@@ -180,49 +129,23 @@ const AddWordForm = ({ onSubmit, onCancel }: AddWordFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
 
     try {
-      const response = await wordsApi.create({
-        word: newWord.word,
-        part_of_speech: newWord.part_of_speech,
-        motif: newWord.motif,
-        mnemonic: newWord.mnemonic
-      });
-
+      const response = await wordsApi.create(newWord);
       if (response.ok) {
-        const newWord = await response.json();
-        await onSubmit(newWord);
-        resetForm();
+        const data = await response.json();
+        onWordAdded(data);
+        onCancel();
       } else {
         const errorData = await response.json();
-        setError(errorData.message || 'Failed to add word');
+        setErrors(prev => ({ ...prev, duplicate: errorData.message === 'This word already exists' }));
       }
     } catch (error) {
       console.error('Error adding word:', error);
-      setError('Failed to add word');
+      setErrors(prev => ({ ...prev, duplicate: true }));
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const resetForm = () => {
-    setNewWord({
-      word: '',
-      part_of_speech: '',
-      motif: '',
-      mnemonic: ''
-    });
-    setErrors({
-      word: false,
-      part_of_speech: false,
-      motif: false,
-      duplicate: false,
-      motifPartOfSpeech: false
-    });
-    setInvalidMotifChars(false);
-    setDuplicateMotifWord(null);
-    setMotifPartOfSpeechError(null);
   };
 
   return (
