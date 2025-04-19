@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { wordsApi } from '../../../utils/api';
 
 interface AddWordFormProps {
   onSubmit: (word: {
@@ -32,6 +33,7 @@ const AddWordForm = ({ onSubmit, onCancel }: AddWordFormProps) => {
   const [isCheckingMotif, setIsCheckingMotif] = useState(false);
   const [motifPartOfSpeechError, setMotifPartOfSpeechError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkWordExists = async () => {
@@ -48,26 +50,18 @@ const AddWordForm = ({ onSubmit, onCancel }: AddWordFormProps) => {
       setIsChecking(true);
       try {
         console.log('Fetching words from database...');
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiUrl}/api/words`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const response = await wordsApi.getByWord(word);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Retrieved words:', data);
+          setErrors(prev => ({ ...prev, duplicate: data !== null }));
+        } else {
+          console.error('Error checking word existence:', response.statusText);
+          setErrors(prev => ({ ...prev, duplicate: false }));
         }
-        const words = await response.json();
-        console.log('Retrieved words:', words);
-        
-        const exists = words.some((w: { word: string }) => {
-          const match = w.word.toLowerCase() === word.toLowerCase();
-          if (match) {
-            console.log('Found matching word:', w.word);
-          }
-          return match;
-        });
-        
-        console.log('Word exists?', exists);
-        setErrors(prev => ({ ...prev, duplicate: exists }));
       } catch (error) {
         console.error('Error checking word:', error);
+        setErrors(prev => ({ ...prev, duplicate: false }));
       } finally {
         setIsChecking(false);
       }
@@ -126,20 +120,17 @@ const AddWordForm = ({ onSubmit, onCancel }: AddWordFormProps) => {
 
       setIsCheckingMotif(true);
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiUrl}/api/words`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const response = await wordsApi.getByMotif(motif);
+        if (response.ok) {
+          const data = await response.json();
+          setDuplicateMotifWord(data ? data.word : null);
+        } else {
+          console.error('Error checking motif existence:', response.statusText);
+          setDuplicateMotifWord(null);
         }
-        const words = await response.json();
-        
-        const existingWord = words.find((w: { motif: string }) => 
-          w.motif && w.motif.toLowerCase() === motif.toLowerCase()
-        );
-        
-        setDuplicateMotifWord(existingWord ? existingWord.word : null);
       } catch (error) {
         console.error('Error checking motif:', error);
+        setDuplicateMotifWord(null);
       } finally {
         setIsCheckingMotif(false);
       }
@@ -186,50 +177,52 @@ const AddWordForm = ({ onSubmit, onCancel }: AddWordFormProps) => {
     console.log('Form component mounted');
   }, []);
 
-  const handleSubmit = async () => {
-    const newErrors = {
-      word: !newWord.word.trim(),
-      part_of_speech: !newWord.part_of_speech,
-      motif: !newWord.motif.trim() || invalidMotifChars,
-      duplicate: errors.duplicate,
-      motifPartOfSpeech: errors.motifPartOfSpeech
-    };
-
-    setErrors(newErrors);
-
-    if (Object.values(newErrors).some(error => error)) {
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
 
     try {
-      setIsSubmitting(true);
-      await onSubmit(newWord);
-      
-      // Reset form
-      setNewWord({
-        word: '',
-        part_of_speech: '',
-        motif: '',
-        mnemonic: ''
+      const response = await wordsApi.create({
+        word: newWord.word,
+        part_of_speech: newWord.part_of_speech,
+        motif: newWord.motif,
+        mnemonic: newWord.mnemonic
       });
-      setErrors({
-        word: false,
-        part_of_speech: false,
-        motif: false,
-        duplicate: false,
-        motifPartOfSpeech: false
-      });
-      setInvalidMotifChars(false);
-      setDuplicateMotifWord(null);
-      
-      // Close the form
-      onCancel();
-    } catch (error: any) {
-      setIsSubmitting(false);
-      if (error.message === 'This word already exists') {
-        setErrors({ ...newErrors, duplicate: true });
+
+      if (response.ok) {
+        const newWord = await response.json();
+        await onSubmit(newWord);
+        resetForm();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Failed to add word');
       }
+    } catch (error) {
+      console.error('Error adding word:', error);
+      setError('Failed to add word');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const resetForm = () => {
+    setNewWord({
+      word: '',
+      part_of_speech: '',
+      motif: '',
+      mnemonic: ''
+    });
+    setErrors({
+      word: false,
+      part_of_speech: false,
+      motif: false,
+      duplicate: false,
+      motifPartOfSpeech: false
+    });
+    setInvalidMotifChars(false);
+    setDuplicateMotifWord(null);
+    setMotifPartOfSpeechError(null);
   };
 
   return (

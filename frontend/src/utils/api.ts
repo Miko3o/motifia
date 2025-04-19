@@ -38,6 +38,7 @@ export const wordsApi = {
   getAll: () => fetchWithCredentials('/api/words'),
   getById: (id: number) => fetchWithCredentials(`/api/words/${id}`),
   getByWord: (word: string) => fetchWithCredentials(`/api/words/word/${encodeURIComponent(word)}`),
+  getByMotif: (motif: string) => fetchWithCredentials(`/api/words/motif/${encodeURIComponent(motif)}`),
   create: (word: any) => fetchWithCredentials('/api/words', {
     method: 'POST',
     headers: {

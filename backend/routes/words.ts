@@ -36,6 +36,26 @@ router.get('/word/:word', async (req: Request, res: Response) => {
   }
 });
 
+// Get a word by motif
+router.get('/motif/:motif', async (req: Request, res: Response) => {
+  try {
+    const motif = req.params.motif;
+    const [rows] = await pool.query(
+      'SELECT * FROM words WHERE LOWER(motif) = LOWER(?)',
+      [motif]
+    );
+    
+    if (Array.isArray(rows) && rows.length > 0) {
+      res.json(rows[0]);
+    } else {
+      res.json(null);
+    }
+  } catch (error) {
+    console.error('Error fetching word by motif:', error);
+    res.status(500).json({ message: 'Error fetching word by motif' });
+  }
+});
+
 // Add a new word
 router.post('/', async (req: Request, res: Response) => {
   const { word, part_of_speech, motif, mnemonic } = req.body;

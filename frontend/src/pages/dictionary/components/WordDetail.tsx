@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { wordsApi, authApi } from '../../../utils/api';
 import Notation from './Notation';
 
 interface Word {
@@ -26,9 +27,25 @@ const WordDetail = () => {
   const [editedWord, setEditedWord] = useState<Word | null>(null);
   const [invalidMotif, setInvalidMotif] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    checkAdminStatus();
+    const checkAuth = async () => {
+      try {
+        const response = await authApi.check();
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
     fetchWordDetails();
   }, [wordParam]);
 
@@ -75,14 +92,7 @@ const WordDetail = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/words/${word.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editedWord),
-      });
-
+      const response = await wordsApi.update(word.id, editedWord);
       if (!response.ok) {
         throw new Error('Failed to update word');
       }
@@ -102,7 +112,7 @@ const WordDetail = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`http://localhost:5000/api/words/word/${encodeURIComponent(wordParam)}`);
+      const response = await wordsApi.getByWord(wordParam);
       
       if (!response.ok) {
         throw new Error('Word not found');
@@ -125,21 +135,15 @@ const WordDetail = () => {
   const handleDelete = async () => {
     if (!word) return;
     
-    if (!confirm('Are you sure you want to delete this word?')) return;
-
     try {
-      const response = await fetch(`http://localhost:5000/api/words/${word.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete word');
+      const response = await wordsApi.delete(word.id);
+      if (response.ok) {
+        navigate('/dictionary');
+      } else {
+        console.error('Failed to delete word');
       }
-
-      navigate('/dictionary');
     } catch (error) {
       console.error('Error deleting word:', error);
-      setError('Failed to delete word');
     }
   };
 
