@@ -47,12 +47,15 @@ console.log('CORS domain:', corsDomain);
 app.use(cors({
   origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(session({
+
+// Session configuration
+const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
@@ -60,11 +63,19 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    domain: process.env.NODE_ENV === 'production' ? `.${corsDomain}` : undefined,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+    domain: process.env.NODE_ENV === 'production' ? corsDomain : undefined,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
-}));
+};
+
+console.log('Session configuration:', {
+  secure: sessionConfig.cookie.secure,
+  sameSite: sessionConfig.cookie.sameSite,
+  domain: sessionConfig.cookie.domain
+});
+
+app.use(session(sessionConfig));
 
 // Debug middleware to log session info
 app.use((req, res, next) => {
@@ -74,7 +85,9 @@ app.use((req, res, next) => {
     sessionID: req.sessionID,
     hasSession: !!req.session,
     hasUser: !!req.session?.user,
-    cookies: req.headers.cookie
+    cookies: req.headers.cookie,
+    origin: req.headers.origin,
+    referer: req.headers.referer
   });
   next();
 });
