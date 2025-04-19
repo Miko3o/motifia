@@ -18,18 +18,29 @@ declare module 'express-session' {
 
 const router = express.Router();
 
-// Get the callback URL from environment variables or use the production URL
-const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || 'https://motifia.vercel.app/admin/callback';
-console.log('Using callback URL:', CALLBACK_URL); // Debug log
+// Debug environment variables
+console.log('Auth environment variables:', {
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Not set',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Not set',
+  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
+  AUTHORIZED_EMAIL: process.env.AUTHORIZED_EMAIL ? 'Set' : 'Not set'
+});
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  CALLBACK_URL
+  process.env.GOOGLE_CALLBACK_URL
 );
 
 // Check if user is authenticated
 router.get('/check', (req: Request, res: Response) => {
+  console.log('Auth check request:', {
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    hasUser: !!req.session?.user,
+    user: req.session?.user
+  });
+
   if (req.session && req.session.user) {
     res.json(req.session.user);
   } else {
@@ -40,6 +51,7 @@ router.get('/check', (req: Request, res: Response) => {
 // Handle Google OAuth callback
 router.post('/google', async (req: Request, res: Response) => {
   const { code } = req.body;
+  console.log('Google auth request received with code');
 
   try {
     // Exchange code for tokens
@@ -53,12 +65,19 @@ router.post('/google', async (req: Request, res: Response) => {
     });
 
     const payload = ticket.getPayload();
+    console.log('Google auth payload:', {
+      email: payload?.email,
+      name: payload?.name,
+      hasPicture: !!payload?.picture
+    });
+
     if (!payload || !payload.email || !payload.name || !payload.picture) {
       throw new Error('Missing required user information');
     }
 
     // Check if user is authorized
     if (payload.email !== process.env.AUTHORIZED_EMAIL) {
+      console.log('Unauthorized email:', payload.email);
       return res.status(403).json({ error: 'Unauthorized email' });
     }
 
@@ -69,6 +88,11 @@ router.post('/google', async (req: Request, res: Response) => {
       picture: payload.picture
     };
 
+    console.log('User authenticated successfully:', {
+      email: payload.email,
+      sessionID: req.sessionID
+    });
+
     res.json({ success: true });
   } catch (error) {
     console.error('Auth error:', error);
@@ -78,6 +102,12 @@ router.post('/google', async (req: Request, res: Response) => {
 
 // Logout
 router.post('/logout', (req: Request, res: Response) => {
+  console.log('Logout request:', {
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    hasUser: !!req.session?.user
+  });
+
   req.session.destroy((err: Error | null) => {
     if (err) {
       console.error('Logout error:', err);
