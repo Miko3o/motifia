@@ -20,7 +20,7 @@ const router = express.Router();
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  'http://localhost:5173/admin/callback'
+  process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5173/admin/callback'
 );
 
 // Check if user is authenticated
