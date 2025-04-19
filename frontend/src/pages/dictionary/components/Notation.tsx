@@ -1,43 +1,40 @@
 import trebleClef from '../../../assets/images/treble.svg';
 import Note from './Note';
 
-// Note position mapping (middle C = 60)
-const getNotePosition = (note: string): { position: number; isSharp: boolean } => {
-  const basePositions: { [key: string]: number } = {
-    'C': 60, // Middle C
-    'D': 55,
-    'E': 50,
-    'F': 45,
-    'G': 40,
-    'A': 35,
-    'B': 30,
-  };
+// Removing unused function
+// const getNotePosition = (note: string): { position: number; isSharp: boolean } => {
+//   const basePositions: { [key: string]: number } = {
+//     'C': 60, // Middle C
+//     'D': 55,
+//     'E': 50,
+//     'F': 45,
+//     'G': 40,
+//     'A': 35,
+//     'B': 30,
+//   };
 
-  let position: number;
-  let isSharp = false;
-  let octaveShift = 0;
+//   let position: number;
+//   let isSharp = false;
+//   let octaveShift = 0;
 
-  // Check for sharp
-  if (note.includes('#')) {
-    isSharp = true;
-    note = note.replace('#', '');
-  }
+//   // Check for sharp
+//   if (note.includes('#')) {
+//     isSharp = true;
+//     note = note.replace('#', '');
+//   }
 
-  // Check for octave markers
-  const octaveUp = note.match(/'/g)?.length || 0;
-  const octaveDown = note.match(/"/g)?.length || 0;
-  octaveShift = (octaveDown * 35) - (octaveUp * 35); // 35 units = one octave
-  note = note.replace(/['|"]/g, '');
+//   // Check for octave up/down
+//   if (note.includes('*')) {
+//     octaveShift = 7; // Move up one octave
+//     note = note.replace('*', '');
+//   } else if (note.includes('"')) {
+//     octaveShift = -7; // Move down one octave
+//     note = note.replace('"', '');
+//   }
 
-  // Get base position
-  position = basePositions[note];
-  if (position === undefined) {
-    console.warn(`Invalid note: ${note}`);
-    return { position: 60, isSharp: false }; // Default to middle C
-  }
-
-  return { position: position + octaveShift, isSharp };
-};
+//   position = basePositions[note] + octaveShift;
+//   return { position, isSharp };
+// };
 
 interface NotationProps {
   word: string;
@@ -77,7 +74,7 @@ const parseNotes = (notesString: string): string[] => {
 };
 
 const Notation = ({ 
-  word,
+  // word, // Removing unused parameter
   notes = "C" // Default to middle C
 }: NotationProps) => {
   const noteArray = parseNotes(notes);

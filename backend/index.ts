@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite dev server
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173', // Use environment variable with fallback
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));

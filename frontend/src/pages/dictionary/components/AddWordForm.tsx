@@ -84,30 +84,6 @@ const AddWordForm = ({ onSubmit, onCancel }: AddWordFormProps) => {
     };
   }, [newWord.word]);
 
-  const validateMotifForPartOfSpeech = (motif: string, partOfSpeech: string): boolean => {
-    if (!motif.trim()) return true; // Empty motif is handled by required field validation
-    
-    const firstNote = motif.trim().charAt(0).toUpperCase();
-    
-    switch (partOfSpeech) {
-      case 'noun':
-        return firstNote === 'C';
-      case 'verb':
-        return firstNote === 'D';
-      case 'adjective':
-      case 'adverb':
-        return firstNote === 'A';
-      case 'pronoun':
-        return firstNote === 'C';
-      case 'preposition':
-        return firstNote === 'E';
-      case 'conjunction':
-        return firstNote === 'G';
-      default:
-        return true;
-    }
-  };
-
   const getMotifPartOfSpeechError = (motif: string, partOfSpeech: string): string | null => {
     if (!motif.trim()) return null;
     
