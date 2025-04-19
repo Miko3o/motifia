@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { wordsApi } from '../../../utils/api';
+import { useAuth } from '../../../contexts/AuthContext';
 import Notation from './Notation';
 
 interface Word {
@@ -14,15 +15,20 @@ interface Word {
 const WordDetail = () => {
   const { word: wordParam } = useParams<{ word: string }>();
   const navigate = useNavigate();
+  const { isAdmin, user, checkAuth } = useAuth();
   const [word, setWord] = useState<Word | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedWord, setEditedWord] = useState<Word | null>(null);
   const [invalidMotif, setInvalidMotif] = useState(false);
-  const isAdmin = import.meta.env.VITE_AUTHORIZED_EMAIL === 'mikomunoz459@gmail.com'; // Hardcoded for now
 
   useEffect(() => {
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    console.log('Auth state in WordDetail:', { isAdmin, userEmail: user?.email });
     fetchWordDetails();
   }, [wordParam]);
 
