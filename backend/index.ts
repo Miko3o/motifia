@@ -14,9 +14,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Clean environment variables
-const corsOrigin = (process.env.CORS_ORIGIN || 'http://localhost:5173').replace(/[;'"]/g, '');
-console.log('Cleaned CORS Origin:', corsOrigin);
+// Debug environment variables
+console.log('Environment variables:', {
+  CORS_ORIGIN: process.env.CORS_ORIGIN,
+  NODE_ENV: process.env.NODE_ENV,
+  SESSION_SECRET: process.env.SESSION_SECRET ? 'Set' : 'Not set',
+  DB_HOST: process.env.DB_HOST ? 'Set' : 'Not set',
+  DB_PORT: process.env.DB_PORT,
+  DB_USER: process.env.DB_USER ? 'Set' : 'Not set',
+  DB_NAME: process.env.DB_NAME ? 'Set' : 'Not set'
+});
 
 // Configure MySQL session store
 const MySQLSession = MySQLStore(session);
@@ -31,7 +38,8 @@ const sessionStore = new MySQLSession({
   expiration: 86400000,
 });
 
-// Parse domain from CORS origin
+// Parse CORS origin to get domain
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
 const corsDomain = new URL(corsOrigin).hostname;
 console.log('CORS domain:', corsDomain);
 
@@ -43,10 +51,10 @@ const sessionConfig = {
   store: sessionStore,
   name: 'motifia.sid',
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
-    domain: process.env.NODE_ENV === 'production' ? corsDomain : undefined,
+    sameSite: 'none' as const,
+    domain: corsDomain,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 };
@@ -74,10 +82,6 @@ app.use(session(sessionConfig));
 
 // Debug middleware to log session info
 app.use((req, res, next) => {
-  // Clean request headers
-  const origin = req.headers.origin?.replace(/[;'"]/g, '');
-  const referer = req.headers.referer?.replace(/[;'"]/g, '');
-
   console.log('Request:', {
     path: req.path,
     method: req.method,
@@ -85,8 +89,8 @@ app.use((req, res, next) => {
     hasSession: !!req.session,
     hasUser: !!req.session?.user,
     cookies: req.headers.cookie,
-    origin,
-    referer,
+    origin: req.headers.origin,
+    referer: req.headers.referer,
     'x-forwarded-proto': req.headers['x-forwarded-proto'],
     'x-forwarded-host': req.headers['x-forwarded-host']
   });
