@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AddWordForm from './components/AddWordForm';
+import { wordsApi } from '../../utils/api';
 
 interface Word {
   id: number;
@@ -41,16 +42,15 @@ const Dictionary = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch('http://localhost:5000/api/words');
+      const response = await wordsApi.getAll();
       if (!response.ok) {
         throw new Error('Failed to fetch words');
       }
       const data = await response.json();
-      setWords(Array.isArray(data) ? data : []);
+      setWords(data);
     } catch (error) {
       console.error('Error fetching words:', error);
       setError('Failed to load words');
-      setWords([]);
     } finally {
       setIsLoading(false);
     }
@@ -62,21 +62,12 @@ const Dictionary = () => {
     motif: string;
     mnemonic: string;
   }) => {
-    if (!newWord.word.trim()) return;
-
     try {
-      const response = await fetch('http://localhost:5000/api/words', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newWord),
-      });
-
+      const response = await wordsApi.create(newWord);
       if (!response.ok) {
         throw new Error('Failed to add word');
       }
-
+      
       // Show success message
       setShowSuccessMessage(true);
       

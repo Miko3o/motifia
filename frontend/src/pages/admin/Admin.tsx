@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QueueList from './components/QueueList';
+import { authApi } from '../../utils/api';
 
 interface User {
   email: string;
@@ -11,6 +12,7 @@ interface User {
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const navigate = useNavigate();
 
   // Your Google OAuth Client ID
@@ -21,16 +23,17 @@ const Admin = () => {
     // Check if user is already authenticated
     const checkAuth = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/auth/check', {
-          credentials: 'include'
-        });
-        
+        const response = await authApi.check();
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('Error checking authentication:', error);
+        setIsAuthenticated(false);
       } finally {
         setLoading(false);
       }
@@ -53,14 +56,11 @@ const Admin = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:5000/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
+      await authApi.logout();
       setUser(null);
-      navigate('/admin');
+      setIsAuthenticated(false);
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('Error logging out:', error);
     }
   };
 

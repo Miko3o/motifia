@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { wordsApi } from '../../../utils/api';
 
 interface Word {
   id: number;
@@ -22,7 +23,7 @@ const QueueList = () => {
 
   const fetchQueuedWords = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/words');
+      const response = await wordsApi.getAll();
       if (!response.ok) {
         throw new Error('Failed to fetch words');
       }
@@ -39,25 +40,19 @@ const QueueList = () => {
   const handleAccept = async (wordId: number) => {
     try {
       // First get the current word data
-      const getResponse = await fetch(`http://localhost:5000/api/words/word/${queuedWords.find(w => w.id === wordId)?.word}`);
+      const getResponse = await wordsApi.getById(wordId);
       if (!getResponse.ok) {
         throw new Error('Failed to fetch word data');
       }
       const wordData = await getResponse.json();
 
       // Then update with all required fields
-      const response = await fetch(`http://localhost:5000/api/words/${wordId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          word: wordData.word,
-          part_of_speech: wordData.part_of_speech,
-          motif: wordData.motif,
-          mnemonic: wordData.mnemonic,
-          status: 'accepted'
-        }),
+      const response = await wordsApi.update(wordId, {
+        word: wordData.word,
+        part_of_speech: wordData.part_of_speech,
+        motif: wordData.motif,
+        mnemonic: wordData.mnemonic,
+        status: 'accepted'
       });
 
       if (!response.ok) {
@@ -74,9 +69,7 @@ const QueueList = () => {
 
   const handleReject = async (wordId: number) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/words/${wordId}`, {
-        method: 'DELETE',
-      });
+      const response = await wordsApi.delete(wordId);
 
       if (!response.ok) {
         throw new Error('Failed to reject word');

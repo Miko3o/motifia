@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authApi } from '../../utils/api';
 
 const AdminCallback = () => {
   const navigate = useNavigate();
@@ -10,20 +11,13 @@ const AdminCallback = () => {
       const code = urlParams.get('code');
 
       if (!code) {
+        console.error('No code found in URL');
         navigate('/admin');
         return;
       }
 
       try {
-        const response = await fetch('http://localhost:5000/api/auth/google', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ code }),
-          credentials: 'include'
-        });
-
+        const response = await authApi.google(code);
         if (response.ok) {
           navigate('/admin');
         } else {
