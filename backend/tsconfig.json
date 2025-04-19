@@ -7,8 +7,15 @@
       "strict": true,
       "esModuleInterop": true,
       "skipLibCheck": true,
-      "forceConsistentCasingInFileNames": true
+      "forceConsistentCasingInFileNames": true,
+      "typeRoots": ["./node_modules/@types", "./types"],
+      "types": ["node", "express", "express-session"]
     },
-    "include": ["*.ts", "routes/**/*", "controllers/**/*", "models/**/*", "middleware/**/*"],
-    "exclude": ["node_modules", "dist"]
+    "include": [
+      "**/*"
+    ],
+    "exclude": [
+      "node_modules",
+      "dist"
+    ]
   }
