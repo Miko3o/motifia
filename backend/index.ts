@@ -27,9 +27,13 @@ const sessionStore = new MySQLSession({
   expiration: 86400000,
 });
 
+// Get the frontend URL from environment variables or use the production URL
+const FRONTEND_URL = process.env.CORS_ORIGIN || 'https://motifia.vercel.app';
+console.log('Using frontend URL:', FRONTEND_URL); // Debug log
+
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173', // Use environment variable with fallback
+  origin: FRONTEND_URL,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -42,8 +46,9 @@ app.use(session({
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: true, // Always use secure cookies in production
     httpOnly: true,
+    sameSite: 'none', // Allow cross-site cookies
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));

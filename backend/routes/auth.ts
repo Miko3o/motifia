@@ -17,10 +17,15 @@ declare module 'express-session' {
 }
 
 const router = express.Router();
+
+// Get the callback URL from environment variables or use the production URL
+const CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || 'https://motifia.vercel.app/admin/callback';
+console.log('Using callback URL:', CALLBACK_URL); // Debug log
+
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5173/admin/callback'
+  CALLBACK_URL
 );
 
 // Check if user is authenticated
