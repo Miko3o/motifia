@@ -16,6 +16,26 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+// Get a word by ID
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const [rows]: any = await pool.query(
+      'SELECT * FROM words WHERE id = ?',
+      [id]
+    );
+    
+    if (!Array.isArray(rows) || rows.length === 0) {
+      res.status(404).json({ message: 'Word not found' });
+    } else {
+      res.json(rows[0]);
+    }
+  } catch (error) {
+    console.error('Error fetching word by ID:', error);
+    res.status(500).json({ message: 'Error fetching word' });
+  }
+});
+
 // Get a specific word by word name
 router.get('/word/:word', async (req: Request, res: Response) => {
   try {

@@ -42,6 +42,13 @@ const QueueList = () => {
       // First get the current word data
       const getResponse = await wordsApi.getById(wordId);
       if (!getResponse.ok) {
+        if (getResponse.status === 404) {
+          console.error(`Word with ID ${wordId} not found`);
+          setError(`Word with ID ${wordId} not found. It may have been deleted.`);
+          // Refresh the list to remove the missing word
+          fetchQueuedWords();
+          return;
+        }
         throw new Error('Failed to fetch word data');
       }
       const wordData = await getResponse.json();
