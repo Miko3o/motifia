@@ -9,6 +9,10 @@ const AdminCallback = () => {
     const handleCallback = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
+      console.log('Callback received with params:', {
+        code: code ? 'Present' : 'Missing',
+        fullUrl: window.location.href
+      });
 
       if (!code) {
         console.error('No code found in URL');
@@ -17,11 +21,20 @@ const AdminCallback = () => {
       }
 
       try {
+        console.log('Sending code to backend...');
         const response = await authApi.google(code);
+        console.log('Backend response:', {
+          status: response.status,
+          ok: response.ok
+        });
+
         if (response.ok) {
+          const data = await response.json();
+          console.log('Authentication successful:', data);
           navigate('/admin');
         } else {
-          console.error('Authentication failed');
+          const error = await response.json();
+          console.error('Authentication failed:', error);
           navigate('/admin');
         }
       } catch (error) {
