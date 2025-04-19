@@ -23,7 +23,8 @@ console.log('Auth environment variables:', {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Not set',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Not set',
   GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
-  AUTHORIZED_EMAIL: process.env.AUTHORIZED_EMAIL ? 'Set' : 'Not set'
+  AUTHORIZED_EMAIL: process.env.AUTHORIZED_EMAIL ? 'Set' : 'Not set',
+  CORS_ORIGIN: process.env.CORS_ORIGIN
 });
 
 const client = new OAuth2Client(
@@ -38,7 +39,8 @@ router.get('/check', (req: Request, res: Response) => {
     sessionID: req.sessionID,
     hasSession: !!req.session,
     hasUser: !!req.session?.user,
-    user: req.session?.user
+    user: req.session?.user,
+    cookies: req.headers.cookie
   });
 
   if (req.session && req.session.user) {
@@ -88,12 +90,21 @@ router.post('/google', async (req: Request, res: Response) => {
       picture: payload.picture
     };
 
-    console.log('User authenticated successfully:', {
-      email: payload.email,
-      sessionID: req.sessionID
-    });
+    // Save session explicitly
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Session save failed' });
+      }
 
-    res.json({ success: true });
+      console.log('User authenticated successfully:', {
+        email: payload.email,
+        sessionID: req.sessionID,
+        cookies: req.headers.cookie
+      });
+
+      res.json({ success: true });
+    });
   } catch (error) {
     console.error('Auth error:', error);
     res.status(500).json({ error: 'Authentication failed' });
@@ -105,7 +116,8 @@ router.post('/logout', (req: Request, res: Response) => {
   console.log('Logout request:', {
     sessionID: req.sessionID,
     hasSession: !!req.session,
-    hasUser: !!req.session?.user
+    hasUser: !!req.session?.user,
+    cookies: req.headers.cookie
   });
 
   req.session.destroy((err: Error | null) => {

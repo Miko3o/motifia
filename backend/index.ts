@@ -38,9 +38,14 @@ const sessionStore = new MySQLSession({
   expiration: 86400000,
 });
 
+// Parse CORS origin to get domain
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const corsDomain = new URL(corsOrigin).hostname;
+console.log('CORS domain:', corsDomain);
+
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+  origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -56,6 +61,7 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    domain: process.env.NODE_ENV === 'production' ? `.${corsDomain}` : undefined,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
@@ -67,7 +73,8 @@ app.use((req, res, next) => {
     method: req.method,
     sessionID: req.sessionID,
     hasSession: !!req.session,
-    hasUser: !!req.session?.user
+    hasUser: !!req.session?.user,
+    cookies: req.headers.cookie
   });
   next();
 });
