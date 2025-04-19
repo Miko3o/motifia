@@ -37,6 +37,11 @@ app.use(session({
 app.use('/api/words', wordsRouter);
 app.use('/api/auth', authRouter);
 
+// Add health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
+
 // Basic route
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Welcome to the Motifa API' });
