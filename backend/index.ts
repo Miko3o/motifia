@@ -36,6 +36,7 @@ const corsDomain = new URL(corsOrigin).hostname;
 console.log('CORS domain:', corsDomain);
 
 // Session configuration
+const isProduction = process.env.NODE_ENV === 'production';
 const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: true,
@@ -43,10 +44,10 @@ const sessionConfig = {
   store: sessionStore,
   name: 'motifia.sid',
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction, // Only require secure in production
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
-    domain: process.env.NODE_ENV === 'production' ? corsDomain : undefined,
+    sameSite: isProduction ? 'none' as const : 'lax' as const,
+    domain: isProduction ? undefined : undefined, // Let browser handle domain in both environments
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 };
@@ -55,17 +56,21 @@ console.log('Session configuration:', {
   secure: sessionConfig.cookie.secure,
   sameSite: sessionConfig.cookie.sameSite,
   domain: sessionConfig.cookie.domain,
-  name: sessionConfig.name
+  name: sessionConfig.name,
+  isProduction
 });
 
 // Middleware
-app.set('trust proxy', 1); // trust first proxy
+if (isProduction) {
+  app.set('trust proxy', 1); // trust first proxy
+}
 
 app.use(cors({
   origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposedHeaders: isProduction ? ['Set-Cookie'] : undefined
 }));
 
 app.use(express.json());
@@ -104,7 +109,8 @@ app.use((req, res, next) => {
       headers: res.getHeaders(),
       sessionID: req.sessionID,
       hasSession: !!req.session,
-      hasUser: !!req.session?.user
+      hasUser: !!req.session?.user,
+      cookies: req.headers.cookie
     });
   });
 

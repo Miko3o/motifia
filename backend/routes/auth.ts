@@ -61,6 +61,8 @@ router.get('/check', (req: Request, res: Response) => {
 // Handle Google OAuth callback
 router.post('/google', async (req: Request, res: Response) => {
   const { code } = req.body;
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   console.log('Google auth request details:', {
     hasCode: !!code,
     sessionID: req.sessionID,
@@ -70,7 +72,8 @@ router.post('/google', async (req: Request, res: Response) => {
     referer: req.headers.referer,
     host: req.headers.host,
     'x-forwarded-proto': req.headers['x-forwarded-proto'],
-    'x-forwarded-host': req.headers['x-forwarded-host']
+    'x-forwarded-host': req.headers['x-forwarded-host'],
+    isProduction
   });
 
   try {
@@ -125,6 +128,17 @@ router.post('/google', async (req: Request, res: Response) => {
       });
     });
 
+    // Set cookie options based on environment
+    const cookieOptions = {
+      secure: isProduction,
+      httpOnly: true,
+      sameSite: isProduction ? 'none' as const : 'lax' as const,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    };
+
+    // Set the session cookie
+    res.cookie('motifia.sid', req.sessionID, cookieOptions);
+
     console.log('User authenticated successfully:', {
       email: payload.email,
       sessionID: req.sessionID,
@@ -134,7 +148,8 @@ router.post('/google', async (req: Request, res: Response) => {
       referer: req.headers.referer,
       host: req.headers.host,
       'x-forwarded-proto': req.headers['x-forwarded-proto'],
-      'x-forwarded-host': req.headers['x-forwarded-host']
+      'x-forwarded-host': req.headers['x-forwarded-host'],
+      isProduction
     });
 
     res.json({ success: true });
@@ -146,11 +161,14 @@ router.post('/google', async (req: Request, res: Response) => {
 
 // Logout
 router.post('/logout', (req: Request, res: Response) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   console.log('Logout request:', {
     sessionID: req.sessionID,
     hasSession: !!req.session,
     hasUser: !!req.session?.user,
-    cookies: req.headers.cookie
+    cookies: req.headers.cookie,
+    isProduction
   });
 
   req.session.destroy((err: Error | null) => {
@@ -158,7 +176,11 @@ router.post('/logout', (req: Request, res: Response) => {
       console.error('Logout error:', err);
       return res.status(500).json({ error: 'Logout failed' });
     }
-    res.clearCookie('motifia.sid');
+    res.clearCookie('motifia.sid', {
+      secure: isProduction,
+      httpOnly: true,
+      sameSite: isProduction ? 'none' as const : 'lax' as const
+    });
     res.json({ success: true });
   });
 });
