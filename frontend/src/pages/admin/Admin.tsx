@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import QueueList from './components/QueueList';
 import { authApi } from '../../utils/api';
 
@@ -12,8 +11,6 @@ interface User {
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const navigate = useNavigate();
 
   // Your Google OAuth Client ID
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -27,13 +24,9 @@ const Admin = () => {
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
-          setIsAuthenticated(true);
-        } else {
-          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error('Error checking authentication:', error);
-        setIsAuthenticated(false);
       } finally {
         setLoading(false);
       }
@@ -58,7 +51,6 @@ const Admin = () => {
     try {
       await authApi.logout();
       setUser(null);
-      setIsAuthenticated(false);
     } catch (error) {
       console.error('Error logging out:', error);
     }
