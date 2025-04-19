@@ -17,31 +17,38 @@ declare module 'express-session' {
 
 const router = express.Router();
 
+// Clean environment variables
+const googleCallbackUrl = (process.env.GOOGLE_CALLBACK_URL || '').replace(/[;'"]/g, '');
+const corsOrigin = (process.env.CORS_ORIGIN || '').replace(/[;'"]/g, '');
+
 // Debug environment variables
 console.log('Auth environment variables:', {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Not set',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Not set',
-  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
+  GOOGLE_CALLBACK_URL: googleCallbackUrl,
   AUTHORIZED_EMAIL: process.env.AUTHORIZED_EMAIL ? 'Set' : 'Not set',
-  CORS_ORIGIN: process.env.CORS_ORIGIN
+  CORS_ORIGIN: corsOrigin
 });
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_CALLBACK_URL
+  googleCallbackUrl
 );
 
 // Check if user is authenticated
 router.get('/check', (req: Request, res: Response) => {
-  console.log('Auth check request:', {
+  console.log('Auth check request details:', {
     sessionID: req.sessionID,
     hasSession: !!req.session,
     hasUser: !!req.session?.user,
     user: req.session?.user,
     cookies: req.headers.cookie,
     origin: req.headers.origin,
-    referer: req.headers.referer
+    referer: req.headers.referer,
+    host: req.headers.host,
+    'x-forwarded-proto': req.headers['x-forwarded-proto'],
+    'x-forwarded-host': req.headers['x-forwarded-host']
   });
 
   if (req.session && req.session.user) {
@@ -54,7 +61,17 @@ router.get('/check', (req: Request, res: Response) => {
 // Handle Google OAuth callback
 router.post('/google', async (req: Request, res: Response) => {
   const { code } = req.body;
-  console.log('Google auth request received with code');
+  console.log('Google auth request details:', {
+    hasCode: !!code,
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    cookies: req.headers.cookie,
+    origin: req.headers.origin,
+    referer: req.headers.referer,
+    host: req.headers.host,
+    'x-forwarded-proto': req.headers['x-forwarded-proto'],
+    'x-forwarded-host': req.headers['x-forwarded-host']
+  });
 
   try {
     // Exchange code for tokens
@@ -98,6 +115,11 @@ router.post('/google', async (req: Request, res: Response) => {
           console.error('Session save error:', err);
           reject(err);
         } else {
+          console.log('Session saved successfully:', {
+            sessionID: req.sessionID,
+            user: req.session.user,
+            cookies: req.headers.cookie
+          });
           resolve();
         }
       });
@@ -109,7 +131,10 @@ router.post('/google', async (req: Request, res: Response) => {
       cookies: req.headers.cookie,
       user: req.session.user,
       origin: req.headers.origin,
-      referer: req.headers.referer
+      referer: req.headers.referer,
+      host: req.headers.host,
+      'x-forwarded-proto': req.headers['x-forwarded-proto'],
+      'x-forwarded-host': req.headers['x-forwarded-host']
     });
 
     res.json({ success: true });
@@ -125,9 +150,7 @@ router.post('/logout', (req: Request, res: Response) => {
     sessionID: req.sessionID,
     hasSession: !!req.session,
     hasUser: !!req.session?.user,
-    cookies: req.headers.cookie,
-    origin: req.headers.origin,
-    referer: req.headers.referer
+    cookies: req.headers.cookie
   });
 
   req.session.destroy((err: Error | null) => {
@@ -135,10 +158,7 @@ router.post('/logout', (req: Request, res: Response) => {
       console.error('Logout error:', err);
       return res.status(500).json({ error: 'Logout failed' });
     }
-    res.clearCookie('motifia.sid', {
-      domain: new URL(process.env.CORS_ORIGIN || '').hostname,
-      secure: true
-    });
+    res.clearCookie('motifia.sid');
     res.json({ success: true });
   });
 });
