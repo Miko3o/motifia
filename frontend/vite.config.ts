@@ -15,5 +15,13 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+  build: {
+    cssMinify: true,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
   }
 })

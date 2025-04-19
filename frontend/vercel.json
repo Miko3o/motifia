@@ -21,8 +21,20 @@
       "dest": "/$1.js"
     },
     {
+      "src": "/(.*)\\.css",
+      "headers": {
+        "Content-Type": "text/css"
+      },
+      "dest": "/$1.css"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ]
+  ],
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
 } 
