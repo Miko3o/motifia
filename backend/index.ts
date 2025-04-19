@@ -65,13 +65,21 @@ if (isProduction) {
   app.set('trust proxy', 1); // trust first proxy
 }
 
-app.use(cors({
-  origin: corsOrigin,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-  exposedHeaders: isProduction ? ['Set-Cookie'] : undefined
-}));
+// CORS configuration
+app.use((req, res, next) => {
+  // Set CORS headers for all responses
+  res.header('Access-Control-Allow-Origin', corsOrigin);
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 app.use(express.json());
 app.use(cookieParser());
