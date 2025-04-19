@@ -54,7 +54,7 @@ const sessionConfig = {
     secure: true,
     httpOnly: true,
     sameSite: 'none' as const,
-    domain: corsDomain,
+    domain: process.env.NODE_ENV === 'production' ? undefined : corsDomain,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 };
