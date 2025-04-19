@@ -20,7 +20,7 @@ const WordDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedWord, setEditedWord] = useState<Word | null>(null);
   const [invalidMotif, setInvalidMotif] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = import.meta.env.VITE_AUTHORIZED_EMAIL === 'mikomunoz459@gmail.com'; // Hardcoded for now
 
   useEffect(() => {
     fetchWordDetails();

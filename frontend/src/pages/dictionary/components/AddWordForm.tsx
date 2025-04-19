@@ -20,7 +20,6 @@ const AddWordForm: React.FC<AddWordFormProps> = ({ onWordAdded, onCancel }) => {
     duplicate: false,
     motifPartOfSpeech: false
   });
-  const [isChecking, setIsChecking] = useState(false);
   const [isCheckingMotif, setIsCheckingMotif] = useState(false);
   const [duplicateMotifWord, setDuplicateMotifWord] = useState<string | null>(null);
   const [invalidMotifChars, setInvalidMotifChars] = useState(false);
@@ -167,7 +166,7 @@ const AddWordForm: React.FC<AddWordFormProps> = ({ onWordAdded, onCancel }) => {
               placeholder="Enter word"
               required
             />
-            {isChecking && (
+            {isCheckingMotif && (
               <span className="absolute right-3 top-2.5 text-gray-400">
                 Checking...
               </span>

@@ -56,6 +56,9 @@ const Dictionary = () => {
     }
   };
 
+  // This function is called by AddWordForm after a successful word creation
+  // newWord contains the word details that were just added through the form
+  // We don't need to use newWord directly since fetchWords will get the updated list from the server
   const handleAddWord = async (newWord: {
     word: string;
     part_of_speech: string;
@@ -63,24 +66,23 @@ const Dictionary = () => {
     mnemonic: string;
   }) => {
     try {
-      const response = await wordsApi.create(newWord);
-      if (!response.ok) {
-        throw new Error('Failed to add word');
-      }
+      // Log the new word for debugging
+      console.log('Word added successfully:', newWord);
       
       // Show success message
       setShowSuccessMessage(true);
       
-      // Hide success message after 3 seconds
+      // Hide success message and form after 3 seconds
       setTimeout(() => {
         setShowSuccessMessage(false);
         setIsAddingWord(false);
       }, 3000);
       
-      fetchWords(); // Refresh the list
+      // Refresh the list to include the new word
+      await fetchWords();
     } catch (error) {
-      console.error('Error adding word:', error);
-      setError('Failed to add word');
+      console.error('Error handling new word:', error);
+      setError('Failed to update word list');
     }
   };
 
@@ -131,7 +133,7 @@ const Dictionary = () => {
 
       {isAddingWord && (
         <AddWordForm
-          onSubmit={handleAddWord}
+          onWordAdded={handleAddWord}
           onCancel={() => setIsAddingWord(false)}
         />
       )}
