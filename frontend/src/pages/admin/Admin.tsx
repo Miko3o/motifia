@@ -9,21 +9,33 @@ interface User {
 }
 
 const Admin = () => {
+  console.log('Admin component mounted');
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Your Google OAuth Client ID
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const REDIRECT_URI = `${window.location.origin}/admin/callback`;
+  
+  console.log('Environment variables:', {
+    GOOGLE_CLIENT_ID: GOOGLE_CLIENT_ID ? 'Set' : 'Not set',
+    REDIRECT_URI,
+    AUTHORIZED_EMAIL: import.meta.env.VITE_AUTHORIZED_EMAIL ? 'Set' : 'Not set'
+  });
 
   useEffect(() => {
     // Check if user is already authenticated
     const checkAuth = async () => {
+      console.log('Checking authentication...');
       try {
         const response = await authApi.check();
+        console.log('Auth check response:', response.status);
         if (response.ok) {
           const userData = await response.json();
+          console.log('User data received:', userData);
           setUser(userData);
+        } else {
+          console.log('Auth check failed:', response.status);
         }
       } catch (error) {
         console.error('Error checking authentication:', error);
