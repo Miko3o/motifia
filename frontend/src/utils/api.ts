@@ -2,10 +2,12 @@
 
 // Get the API URL from environment variables
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+console.log('API_URL:', API_URL); // Debug log
 
 // Generic fetch function with credentials
 export const fetchWithCredentials = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_URL}${endpoint}`;
+  console.log('Fetching URL:', url); // Debug log
   return fetch(url, {
     ...options,
     credentials: 'include',
