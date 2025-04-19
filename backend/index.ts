@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import session from 'express-session';
+import MySQLStore from 'express-mysql-session';
 import cookieParser from 'cookie-parser';
 import wordsRouter from './routes/words';
 import authRouter from './routes/auth';
@@ -12,6 +13,19 @@ dotenv.config();
 // Initialize express app
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Configure MySQL session store
+const MySQLSession = MySQLStore(session);
+const sessionStore = new MySQLSession({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || '3306'),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  clearExpired: true,
+  checkExpirationInterval: 900000,
+  expiration: 86400000,
+});
 
 // Middleware
 app.use(cors({
@@ -26,6 +40,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
+  store: sessionStore,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
