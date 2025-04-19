@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import dotenv from 'dotenv';
-import session from 'express-session';
 
 dotenv.config();
 
@@ -18,19 +17,23 @@ declare module 'express-session' {
 
 const router = express.Router();
 
+// Clean environment variables
+const googleCallbackUrl = (process.env.GOOGLE_CALLBACK_URL || '').replace(/[;'"]/g, '');
+const corsOrigin = (process.env.CORS_ORIGIN || '').replace(/[;'"]/g, '');
+
 // Debug environment variables
 console.log('Auth environment variables:', {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Not set',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Not set',
-  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
+  GOOGLE_CALLBACK_URL: googleCallbackUrl,
   AUTHORIZED_EMAIL: process.env.AUTHORIZED_EMAIL ? 'Set' : 'Not set',
-  CORS_ORIGIN: process.env.CORS_ORIGIN
+  CORS_ORIGIN: corsOrigin
 });
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_CALLBACK_URL
+  googleCallbackUrl
 );
 
 // Check if user is authenticated
@@ -90,21 +93,26 @@ router.post('/google', async (req: Request, res: Response) => {
       picture: payload.picture
     };
 
-    // Save session explicitly
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-        return res.status(500).json({ error: 'Session save failed' });
-      }
-
-      console.log('User authenticated successfully:', {
-        email: payload.email,
-        sessionID: req.sessionID,
-        cookies: req.headers.cookie
+    // Save session explicitly and wait for it to complete
+    await new Promise<void>((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          reject(err);
+        } else {
+          resolve();
+        }
       });
-
-      res.json({ success: true });
     });
+
+    console.log('User authenticated successfully:', {
+      email: payload.email,
+      sessionID: req.sessionID,
+      cookies: req.headers.cookie,
+      user: req.session.user
+    });
+
+    res.json({ success: true });
   } catch (error) {
     console.error('Auth error:', error);
     res.status(500).json({ error: 'Authentication failed' });
@@ -125,7 +133,7 @@ router.post('/logout', (req: Request, res: Response) => {
       console.error('Logout error:', err);
       return res.status(500).json({ error: 'Logout failed' });
     }
-    res.clearCookie('connect.sid');
+    res.clearCookie('motifia.sid');
     res.json({ success: true });
   });
 });

@@ -14,16 +14,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Debug environment variables
-console.log('Environment variables:', {
-  CORS_ORIGIN: process.env.CORS_ORIGIN,
-  NODE_ENV: process.env.NODE_ENV,
-  SESSION_SECRET: process.env.SESSION_SECRET ? 'Set' : 'Not set',
-  DB_HOST: process.env.DB_HOST ? 'Set' : 'Not set',
-  DB_PORT: process.env.DB_PORT,
-  DB_USER: process.env.DB_USER ? 'Set' : 'Not set',
-  DB_NAME: process.env.DB_NAME ? 'Set' : 'Not set'
-});
+// Clean environment variables
+const corsOrigin = (process.env.CORS_ORIGIN || 'http://localhost:5173').replace(/[;'"]/g, '');
+console.log('Cleaned CORS Origin:', corsOrigin);
 
 // Configure MySQL session store
 const MySQLSession = MySQLStore(session);
@@ -38,28 +31,17 @@ const sessionStore = new MySQLSession({
   expiration: 86400000,
 });
 
-// Parse CORS origin to get domain
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+// Parse domain from CORS origin
 const corsDomain = new URL(corsOrigin).hostname;
 console.log('CORS domain:', corsDomain);
-
-// Middleware
-app.use(cors({
-  origin: corsOrigin,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
-}));
-
-app.use(express.json());
-app.use(cookieParser());
 
 // Session configuration
 const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: false,
+  resave: true,
   saveUninitialized: false,
   store: sessionStore,
+  name: 'motifia.sid',
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
@@ -72,13 +54,30 @@ const sessionConfig = {
 console.log('Session configuration:', {
   secure: sessionConfig.cookie.secure,
   sameSite: sessionConfig.cookie.sameSite,
-  domain: sessionConfig.cookie.domain
+  domain: sessionConfig.cookie.domain,
+  name: sessionConfig.name
 });
 
+// Middleware
+app.set('trust proxy', 1); // trust first proxy
+
+app.use(cors({
+  origin: corsOrigin,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+}));
+
+app.use(express.json());
+app.use(cookieParser());
 app.use(session(sessionConfig));
 
 // Debug middleware to log session info
 app.use((req, res, next) => {
+  // Clean request headers
+  const origin = req.headers.origin?.replace(/[;'"]/g, '');
+  const referer = req.headers.referer?.replace(/[;'"]/g, '');
+
   console.log('Request:', {
     path: req.path,
     method: req.method,
@@ -86,8 +85,10 @@ app.use((req, res, next) => {
     hasSession: !!req.session,
     hasUser: !!req.session?.user,
     cookies: req.headers.cookie,
-    origin: req.headers.origin,
-    referer: req.headers.referer
+    origin,
+    referer,
+    'x-forwarded-proto': req.headers['x-forwarded-proto'],
+    'x-forwarded-host': req.headers['x-forwarded-host']
   });
   next();
 });
