@@ -10,6 +10,9 @@
 !.yarn/releases
 !.yarn/versions
 
+# hoist orphan (locks on native .node); delete folder when Windows releases it
+/_orphan_hoist_delete_me/
+
 # testing
 /coverage
 
@@ -32,6 +35,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel

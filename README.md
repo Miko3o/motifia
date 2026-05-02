@@ -17,25 +17,18 @@ This web application serves as both a dictionary and learning platform for Motif
 
 ## Tech Stack
 
-### Frontend
-- React with TypeScript
-- Vite for build tooling
-- Tailwind CSS for styling
-- React Router for navigation
+### Web app
 
-### Backend
-- Node.js with Express
-- TypeScript
-- MySQL database
-- Google OAuth for authentication
-- Express Session for session management
+- Next.js (App Router) with React and TypeScript
+- Tailwind CSS
+
+Separate Express/MySQL backends are not included in this repository; configure `BACKEND_URL` in `.env.local` when you have an API to proxy.
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
-- MySQL (v8 or higher)
-- Google OAuth credentials
-- npm or yarn package manager
+- Node.js 20+ (recommended for Next.js 16)
+- npm or another compatible package manager
+- Optional: backend API reachable at the URL set in `.env.local` (see `.env.example`)
 
 ## Getting Started
 
@@ -46,90 +39,31 @@ git clone https://github.com/yourusername/motifia.git
 cd motifia
 ```
 
-### 2. Set up the database
+### 2. Environment variables
 
-Create a MySQL database named `motifia`:
+From the repo root, copy `.env.example` to `.env.local` and adjust values (`BACKEND_URL`, Google client ID, authorized email).
 
-```sql
-CREATE DATABASE motifia;
-```
-
-### 3. Configure environment variables
-
-#### Frontend
-Copy the example environment file and update it with your values:
+### 3. Install dependencies and run locally
 
 ```bash
-cd frontend
-cp .env.example .env
-```
-
-Update the following variables in `frontend/.env`:
-- `VITE_API_URL`: Backend API URL
-- `VITE_GOOGLE_CLIENT_ID`: Your Google OAuth client ID
-- `VITE_AUTHORIZED_EMAIL`: Email address authorized to access the admin features
-
-#### Backend
-Copy the example environment file and update it with your values:
-
-```bash
-cd backend
-cp .env.example .env
-```
-
-Update the following variables in `backend/.env`:
-- Database configuration (host, user, password, etc.)
-- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: Your Google OAuth credentials
-- `SESSION_SECRET`: A random string for session encryption
-- `AUTHORIZED_EMAIL`: Email address authorized to access the admin features
-
-### 4. Install dependencies
-
-```bash
-# Install frontend dependencies
-cd frontend
 npm install
-
-# Install backend dependencies
-cd ../backend
-npm install
-```
-
-### 5. Start the development servers
-
-```bash
-# Start the backend server
-cd backend
-npm run dev
-
-# Start the frontend development server
-cd frontend
 npm run dev
 ```
 
-The application should now be running at:
-- Frontend: http://localhost:5173
-- Backend: http://localhost:5000
+Open http://localhost:3000 .
 
-## Project Structure
+## Project structure
 
 ```
 motifia/
-├── frontend/               # Frontend React application
-│   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   ├── pages/         # Page components
-│   │   ├── services/      # API service functions
-│   │   └── types/         # TypeScript type definitions
-│   └── public/            # Static assets
-├── backend/               # Backend Node.js application
-│   ├── src/
-│   │   ├── routes/        # API route handlers
-│   │   ├── models/        # Database models
-│   │   ├── middleware/    # Express middleware
-│   │   └── types/         # TypeScript type definitions
-│   └── config/            # Configuration files
-└── README.md              # Project documentation
+├── public/              # Static assets
+├── src/
+│   ├── app/             # Next.js routes
+│   ├── components/
+│   ├── contexts/
+│   └── lib/
+├── package.json
+└── README.md
 ```
 
 ## Contributing
