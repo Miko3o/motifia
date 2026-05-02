@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import Link from "next/link";
 
 const Navbar = () => {
   return (
@@ -7,9 +7,24 @@ const Navbar = () => {
         <div className="flex justify-between items-center">
           <div className="text-white font-bold text-xl">Motifia</div>
           <div className="space-x-6">
-            <Link to="/" className="text-white hover:text-gray-300 transition-colors duration-200">Home</Link>
-            <Link to="/grammar" className="text-white hover:text-gray-300 transition-colors duration-200">Grammar</Link>
-            <Link to="/dictionary" className="text-white hover:text-gray-300 transition-colors duration-200">Dictionary</Link>
+            <Link
+              href="/"
+              className="text-white hover:text-gray-300 transition-colors duration-200"
+            >
+              Home
+            </Link>
+            <Link
+              href="/grammar"
+              className="text-white hover:text-gray-300 transition-colors duration-200"
+            >
+              Grammar
+            </Link>
+            <Link
+              href="/dictionary"
+              className="text-white hover:text-gray-300 transition-colors duration-200"
+            >
+              Dictionary
+            </Link>
           </div>
         </div>
       </div>

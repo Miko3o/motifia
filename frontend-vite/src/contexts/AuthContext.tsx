@@ -1,14 +1,5 @@
-"use client";
-
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  type ReactNode,
-} from "react";
-import { authApi } from "@/lib/api";
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authApi } from '../utils/api';
 
 interface User {
   email: string;
@@ -30,19 +21,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
-const authorizedEmail = process.env.NEXT_PUBLIC_AUTHORIZED_EMAIL;
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const checkAuth = useCallback(async () => {
+  const checkAuth = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -53,34 +46,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setUser(null);
       }
-    } catch (err) {
-      console.error("Error checking authentication:", err);
-      setError("Failed to check authentication");
+    } catch (error) {
+      console.error('Error checking authentication:', error);
+      setError('Failed to check authentication');
       setUser(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const logout = useCallback(async () => {
+  const logout = async () => {
     try {
       setLoading(true);
       await authApi.logout();
       setUser(null);
       setError(null);
-    } catch (err) {
-      console.error("Error logging out:", err);
-      setError("Failed to log out");
+    } catch (error) {
+      console.error('Error logging out:', error);
+      setError('Failed to log out');
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, []);
 
-  const isAdmin = user?.email === authorizedEmail;
+  const isAdmin = user?.email === import.meta.env.VITE_AUTHORIZED_EMAIL;
 
   const value = {
     user,
@@ -88,10 +81,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     error,
     checkAuth,
     logout,
-    isAdmin,
+    isAdmin
   };
 
   return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
   );
-};
+}; 
