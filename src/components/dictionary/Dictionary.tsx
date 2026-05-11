@@ -48,14 +48,26 @@ export default function Dictionary() {
       setIsLoading(true);
       setError(null);
       const response = await wordsApi.getAll();
+      const data: unknown = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error("Failed to fetch words");
+        const msg =
+          data &&
+          typeof data === "object" &&
+          "message" in data &&
+          typeof (data as { message: unknown }).message === "string"
+            ? (data as { message: string }).message
+            : `Request failed (${response.status})`;
+        throw new Error(msg);
       }
-      const data = await response.json();
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid response from server");
+      }
       setWords(data);
     } catch (err) {
       console.error("Error fetching words:", err);
-      setError("Failed to load words");
+      setError(
+        err instanceof Error ? err.message : "Failed to load words"
+      );
     } finally {
       setIsLoading(false);
     }

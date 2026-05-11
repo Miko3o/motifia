@@ -127,7 +127,7 @@ export default function WordDetail() {
     }
   };
 
-  if (isLoading || !editedWord) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-8">
         <div className="text-center">Loading...</div>
@@ -148,6 +148,14 @@ export default function WordDetail() {
         >
           Back to Dictionary
         </button>
+      </div>
+    );
+  }
+
+  if (!editedWord) {
+    return (
+      <div className="container mx-auto p-8">
+        <div className="text-center">Loading...</div>
       </div>
     );
   }
